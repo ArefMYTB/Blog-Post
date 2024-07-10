@@ -28,7 +28,7 @@ class Rating(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     blog_post = models.ForeignKey(BlogPost, on_delete=models.CASCADE)
     rating = models.IntegerField()
-    createdTime = models.DateTimeField(auto_now_add=True)
+    created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
         return f'{self.user.username} - {self.blog_post.title} - {self.rating}'
