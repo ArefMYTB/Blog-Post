@@ -79,7 +79,7 @@
                         <form method="post" class="user-rate">
                             {% csrf_token %}
                             <input type="hidden" name="title_id" value="{{ data.id }}">
-                            {% for rating in "12345" %}
+                            {% for rating in "012345" %}
                                 <input type="submit" name="rating" value="{{ rating }}" class="{% if data.user_rating == rating|add:'0' %}rating-button-selected{% else %}rating-button{% endif %}">
                             {% endfor %}
 <!--                            <input type="submit" name="rating" value="1" class="rating-button">-->
