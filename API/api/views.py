@@ -49,7 +49,7 @@ class BlogPostList(APIView):
                 'title': blog_post.title,
                 'rate': blog_post.getAverageRate(),
                 'numRate': numRate if numRate < 1000 else "1k+",
-                'user_rating': int(user_ratings.get(blog_post.id, 0))
+                'user_rating': int(user_ratings.get(blog_post.id, -1))
             })
         context = {"data": data}
 
@@ -72,8 +72,8 @@ class BlogPostList(APIView):
                 # Check if user has rated any blog recently
                 recent_ratings = Rating.objects.filter(user=request.user,
                                                        created_at__gte=timezone.now() - timedelta(hours=1))
-                # if recent_ratings.exists():
-                #     return JsonResponse({'error': 'You can only rate once per hour.'})
+                if recent_ratings.exists():
+                    return JsonResponse({'error': 'You can only rate once per hour.'})
 
             elif created or user_rating.rating != rating:
                 user_rating.rating = rating
