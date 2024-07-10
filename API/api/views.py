@@ -11,6 +11,7 @@ from django.http import JsonResponse
 import numpy as np
 from sklearn.cluster import DBSCAN
 
+
 class BlogPostListCreate(generics.ListCreateAPIView):
     queryset = BlogPost.objects.all()
     serializer_class = BlogPostSerializers
@@ -70,10 +71,10 @@ class BlogPostList(APIView):
                 # Check if user has rated any blog recently
                 recent_ratings = Rating.objects.filter(user=request.user,
                                                        created_at__gte=timezone.now() - timedelta(hours=1))
-                if recent_ratings.exists():
-                    return JsonResponse({'error': 'You can only rate once per hour.'})
+                # if recent_ratings.exists():
+                #     return JsonResponse({'error': 'You can only rate once per hour.'})
 
-            if created or user_rating.rating != rating:
+            elif created or user_rating.rating != rating:
                 user_rating.rating = rating
                 user_rating.save()
             else:
@@ -91,7 +92,7 @@ def extract_features(ratings):
     return features
 
 
-def detect_and_delete_fake_ratings(blog_post, eps=3600, min_samples=10):
+def detect_and_delete_fake_ratings(blog_post, eps=3600, min_samples=200):
     """
     Detect clusters of ratings submitted within 'eps' seconds with the same rating value.
     - eps: Maximum distance between two samples for them to be considered as in the same neighborhood (in seconds).
@@ -107,11 +108,27 @@ def detect_and_delete_fake_ratings(blog_post, eps=3600, min_samples=10):
     clustering = DBSCAN(eps=eps, min_samples=min_samples, metric='euclidean').fit(features)
     labels = clustering.labels_
 
-    # If a cluster is detected (more than 10 ratings with the same label), delete those ratings
-    for label in set(labels):
-        if label != -1 and list(labels).count(label) >= min_samples:
-            clustered_ratings = [ratings[i] for i in range(len(ratings)) if labels[i] == label]
-            Rating.objects.filter(id__in=[r.id for r in clustered_ratings]).delete()
-            return True
+    # print(features)
+    # print(clustering)
+    # print(labels)
+
+    # If a cluster is detected (more than 200 rating with the same label and rating value), delete those ratings
+    clusters = {}
+    for i, label in enumerate(labels):
+        if label != -1:
+            clusters[label] = clusters.get(label, []) + [ratings[i]]
+
+    for cluster_ratings in clusters.values():
+        if len(cluster_ratings) >= min_samples:
+            rating_values = [rating.rating for rating in cluster_ratings]
+            most_common_rating = max(set(rating_values), key=rating_values.count)
+            count_most_common = rating_values.count(most_common_rating)
+
+            # If a significant portion of the ratings in the cluster are the same, delete those ratings
+            if count_most_common >= min_samples:
+                ratings_to_delete = [r for r in cluster_ratings if r.rating == most_common_rating]
+                Rating.objects.filter(id__in=[r.id for r in ratings_to_delete]).delete()
+                print("Anomaly Rates Deleted")
+                return True
 
     return False
