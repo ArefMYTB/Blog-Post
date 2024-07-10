@@ -42,12 +42,13 @@ class BlogPostList(APIView):
 
         data = []
         for blog_post in blog_posts:
+            numRate = blog_post.getNumRate()
             detect_and_delete_fake_ratings(blog_post)
             data.append({
                 'id': blog_post.id,
                 'title': blog_post.title,
                 'rate': blog_post.getAverageRate(),
-                'numRate': blog_post.getNumRate(),
+                'numRate': numRate if numRate < 1000 else "1k+",
                 'user_rating': int(user_ratings.get(blog_post.id, 0))
             })
         context = {"data": data}
