@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Blogs</title>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #f0f0f0;
+        }
+        .container {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            max-width: 300px;
+            width: 100%;
+        }
+        .title {
+            font-size: 24px;
+            margin-bottom: 10px;
+        }
+        .rate-info {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+
+        }
+        .user-rate-container {
+            margin-right: 100px;
+        }
+        .user-rate {
+            margin: 5px;
+        }
+        .rating-button {
+            font-size: 20px;
+            color: #757575;
+            cursor: pointer;
+            background: none;
+            border: none;
+            padding: 0px;
+            transition: color 0.3s;
+        }
+        .rating-button:hover{
+            color: #ff9800;
+        }
+        .rating-button-selected{
+            color: #ff9800
+        }
+        .num-rate-container {
+            margin-left: 60px;
+        }
+        .rate {
+            font-size: 20px;
+            color: #ff9800;
+        }
+        .num-rates {
+            font-size: 16px;
+            color: #757575;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+            {% for data in data %}
+                <div class="title">{{data.title}}</div>
+                <div class="rate-info">
+                    <div class="user-rate-container">
+                        <div>Your Rate: </div>
+                        <form method="post" class="user-rate">
+                            {% csrf_token %}
+                            <input type="hidden" name="title_id" value="{{ data.id }}">
+                            {% for rating in "12345" %}
+                                <input type="submit" name="rating" value="{{ rating }}" class="{% if data.user_rating == rating|add:'0' %}rating-button-selected{% else %}rating-button{% endif %}">
+                            {% endfor %}
+<!--                            <input type="submit" name="rating" value="1" class="rating-button">-->
+<!--                            <input type="submit" name="rating" value="2" class="rating-button">-->
+<!--                            <input type="submit" name="rating" value="3" class="rating-button">-->
+<!--                            <input type="submit" name="rating" value="4" class="rating-button">-->
+<!--                            <input type="submit" name="rating" value="5" class="rating-button">-->
+                        </form>
+                    </div>
+                    <div class="num-rate-container">
+                        <div class="rate">{{data.rate|floatformat:1}}</div>
+                        <div class="num-rates">{{data.numRate}}</div>
+                    </div>
+                </div>
+<!--                <h1>{{ data.user_rating }}</h1>-->
+                <hr>
+            {% endfor %}
+    </div>
+
+</body>
+</html>
