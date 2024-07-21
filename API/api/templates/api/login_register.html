@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Login</title>
+</head>
+<body>
+
+{% block content %}
+
+{% if page == 'login' %}
+  <div>
+    <form method="post", action="">
+        {% csrf_token %}
+
+        <label>Username: </label>
+        <input type="text" name="username" placeholder="Enter Username">
+        <label>Password: </label>
+        <input type="password" name="password" placeholder="Enter Password">
+
+        <input type="submit" value="Login">
+
+        <p>Haven't signed up yet?</p>
+        <a href="{% url 'register' %}">Sign Up</a>
+
+    </form>
+  </div>
+
+
+{% elif page == 'register' %}
+
+  <div>
+    <form method="post", action="">
+        {% csrf_token %}
+
+        {{form.as_p}}
+        <input type="submit" value="Register">
+
+        <p>Already signed in?</p>
+        <a href="{% url 'login' %}">Sign In</a>
+
+    </form>
+  </div>
+
+{% endif %}
+
+{% endblock content %}
+
+</body>
+</html>
