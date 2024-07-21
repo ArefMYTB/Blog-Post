@@ -4,12 +4,70 @@ from .models import BlogPost, Rating
 from .serializers import BlogPostSerializers
 from rest_framework.views import APIView
 from django.views.decorators.csrf import csrf_exempt
+from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth.models import User
+from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth.forms import UserCreationForm
 from django.utils import timezone
 from datetime import timedelta
 from django.http import JsonResponse
 import numpy as np
 from sklearn.cluster import DBSCAN
+
+
+def loginPage(request):
+
+    page = 'login'
+
+    if request.user.is_authenticated:
+        return redirect('show')
+
+    if request.method == 'POST':
+        username = request.POST.get('username').lower()
+        password = request.POST.get('password')
+
+        try:
+            user = User.objects.get(username=username)
+
+            user = authenticate(request, username=username, password=password)
+
+            if user is not None:
+                login(request, user)
+                return redirect('show')
+            else:
+                return JsonResponse({'error': 'Username or Password is wrong!'})
+
+        except:
+            return JsonResponse({'error': 'User does not exist :('})
+
+    context = {'page': page}
+    return render(request, "api/login_register.html", context)
+
+
+def logoutUser(request):
+    logout(request)
+    return redirect('login')
+
+
+def registerPage(request):
+
+    page = 'register'
+    form = UserCreationForm()
+
+    if request.method == "POST":
+        form = UserCreationForm(request.POST)
+        if form.is_valid():
+            user = form.save(commit=False)
+            user.username = user.username.lower()
+            user.save()
+            login(request, user)
+            return redirect('show')
+        else:
+            return JsonResponse({'error': 'Some problem with form.'})
+
+    context = {'page': page, 'form': form}
+    return render(request, "api/login_register.html", context)
 
 
 class BlogPostListCreate(generics.ListCreateAPIView):
@@ -25,10 +83,11 @@ class BlogPostRetrieveUpdateDestroy(generics.RetrieveUpdateDestroyAPIView):
 
 class BlogPostList(APIView):
     def get(self, request, format=None):
-        title = request.query_params.get("title", "")
+        # title = request.query_params.get("title", "")
+        title = request.GET.get('q') if request.GET.get('q') != None else ''
 
         if title:
-            blog_posts = BlogPost.objects.filter(title_icontains=title)
+            blog_posts = BlogPost.objects.filter(title__icontains=title)
         else:
             blog_posts = BlogPost.objects.all()
 
@@ -68,14 +127,14 @@ class BlogPostList(APIView):
             user_rating, created = Rating.objects.get_or_create(user=request.user, blog_post=blog_post,
                                                                 defaults={'rating': rating})
 
-            if created:
-                # Check if user has rated any blog recently
-                recent_ratings = Rating.objects.filter(user=request.user,
-                                                       created_at__gte=timezone.now() - timedelta(hours=1))
-                if recent_ratings.exists():
-                    return JsonResponse({'error': 'You can only rate once per hour.'})
+            # if created:
+            #     # Check if user has rated any blog recently
+            #     recent_ratings = Rating.objects.filter(user=request.user,
+            #                                            created_at__gte=timezone.now() - timedelta(hours=1))
+            #     if recent_ratings.exists():
+            #         return JsonResponse({'error': 'You can only rate once per hour.'})
 
-            elif created or user_rating.rating != rating:
+            if created or user_rating.rating != rating:
                 user_rating.rating = rating
                 user_rating.save()
             else:
